@@ -20,16 +20,28 @@ Built using TensorFlow, Keras, and Streamlit.
 - Total images : 7220
 - Total classes : 5
 - Dataset is well balanced across all classes
-- No class imbalance issues detected
 
-### Phase 1 Outputs
-| File | Description |
-|------|-------------|
-| class_distribution.png | Bar chart showing image count per class |
-| sample_images.png | One sample image from each disease class |
+## Phase 2 - Preprocessing (Completed)
+- Normalized pixel values from 0-255 to 0-1
+- Applied data augmentation techniques
+- Split dataset 80% train and 20% validation
+- Training batches   : 181
+- Validation batches : 46
+- Batch image shape  : (32, 224, 224, 3)
+- Computed class weights for imbalance handling
+
+### Augmentation Techniques Used
+| Technique | Value |
+|-----------|-------|
+| Rotation | 20 degrees |
+| Width shift | 10% |
+| Height shift | 10% |
+| Zoom | 15% |
+| Horizontal flip | Yes |
+| Vertical flip | Yes |
+| Brightness range | 0.8 to 1.2 |
 
 ## Upcoming Phases
-- Phase 2 : Data Preprocessing and Augmentation
 - Phase 3 : Model Building (MobileNetV2)
 - Phase 4 : Model Evaluation
 - Phase 5 : Streamlit Web App
