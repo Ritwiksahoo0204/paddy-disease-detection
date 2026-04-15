@@ -28,11 +28,21 @@ Built using TensorFlow, Keras, and Streamlit.
 - Pretrained on : ImageNet
 - Custom head   : GAP → BatchNorm → Dense(256) → Dropout → Dense(128) → Dropout → Softmax
 - Training      : 2-phase (frozen base → fine-tuning top 30 layers)
-- Optimizer     : Adam
-- Loss          : Categorical Crossentropy
+- Model size    : 25.03 MB
+
+## Phase 4 - Evaluation (Completed)
+- Overall Accuracy : 99.58%
+
+### Per Class Accuracy
+| Class | Accuracy |
+|-------|----------|
+| Bacterialblight | 99.37% |
+| Blast | 98.61% |
+| Brownspot | 100.00% |
+| Healthy | 100.00% |
+| Tungro | 100.00% |
 
 ## Upcoming Phases
-- Phase 4 : Model Evaluation
 - Phase 5 : Streamlit Web App
 - Phase 6 : Deployment on Streamlit Cloud
 
