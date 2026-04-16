@@ -6,10 +6,7 @@ import cv2
 from PIL import Image
 import plotly.graph_objects as go
 
-import os
-os.environ["TF_USE_LEGACY_KERAS"] = "1"
-
-import tf_keras as keras
+from tensorflow import keras
 
 st.set_page_config(
     page_title = "Paddy Disease Detection",
