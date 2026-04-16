@@ -1,11 +1,15 @@
 
 import streamlit as st
-import tensorflow as tf
 import numpy as np
 import json
 import cv2
 from PIL import Image
 import plotly.graph_objects as go
+
+import os
+os.environ["TF_USE_LEGACY_KERAS"] = "1"
+
+import tf_keras as keras
 
 st.set_page_config(
     page_title = "Paddy Disease Detection",
@@ -15,11 +19,11 @@ st.set_page_config(
 
 @st.cache_resource
 def load_models():
-    disease_model = tf.keras.models.load_model("best_model.keras")
+    disease_model = keras.models.load_model("best_model.keras")
     with open("class_names.json", "r") as f:
         class_names = json.load(f)
     try:
-        validator = tf.keras.models.load_model("paddy_validator.keras")
+        validator = keras.models.load_model("paddy_validator.keras")
         validator_loaded = True
     except:
         validator = None
@@ -106,11 +110,9 @@ def show_rejection(title, message):
     This app is designed **only for paddy (rice) leaf images**.
     - Paddy leaves are **long, narrow and green**
     - From the rice plant (*Oryza sativa*)
-    - Grown in **wet or flooded** agricultural fields
     - This app detects: **Bacterialblight, Blast, Brownspot, Healthy, Tungro**
     """)
 
-# ── Header ─────────────────────────────────────────────────
 st.markdown("""
 <h1 style="text-align:center; color:#27ae60;">🌾 Paddy Disease Detection</h1>
 <p style="text-align:center; color:gray; font-size:16px;">
@@ -118,7 +120,6 @@ st.markdown("""
 </p><hr>
 """, unsafe_allow_html=True)
 
-# ── Sidebar ─────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("### 📋 Model Info")
     st.markdown("""
@@ -145,88 +146,59 @@ with st.sidebar:
         st.markdown(f"**{cls}** — {acc}")
     st.markdown("---")
     st.warning("⚠️ **Paddy leaves only.**\nOther images will be rejected automatically.")
-    st.markdown("### ℹ️ How to Use")
-    st.markdown("""
-    1. Upload a **clear paddy leaf** image
-    2. System checks image quality
-    3. System verifies it is a paddy leaf
-    4. Disease prediction is shown
-    5. Follow the treatment advice
-    """)
 
-# ── Main layout ──────────────────────────────────────────────
 col1, col2 = st.columns([1, 1], gap="large")
 
 with col1:
     st.markdown("### 📤 Upload Paddy Leaf Image")
     uploaded_file = st.file_uploader(
         "Choose a paddy leaf image",
-        type = ["jpg", "jpeg", "png"],
-        help = "Upload a clear paddy (rice) leaf image only"
+        type = ["jpg", "jpeg", "png"]
     )
     if uploaded_file:
         image = Image.open(uploaded_file)
         st.image(image, caption="Uploaded Image", use_column_width=True)
-        st.success(f"✅ Image uploaded: {uploaded_file.name}")
 
 with col2:
     st.markdown("### 🔍 Prediction Results")
 
     if uploaded_file:
-        with st.spinner("Analyzing image... please wait"):
+        with st.spinner("Analyzing image..."):
             img_array = preprocess(image)
 
-            # ── Step 1: Image quality check ──────────────
             quality_ok, quality_msg = check_image_quality(image)
             if not quality_ok:
                 show_rejection("Image Quality Issue", quality_msg)
                 st.stop()
 
-            # ── Step 2: Paddy leaf validation ─────────────
             if validator is not None:
-                paddy_prob = float(
-                    validator.predict(img_array, verbose=0)[0][0]
-                )
+                paddy_prob = float(validator.predict(img_array, verbose=0)[0][0])
                 if paddy_prob < VALIDATOR_THRESHOLD:
                     show_rejection(
                         "Not a Paddy Leaf Detected!",
-                        f"This does not appear to be a paddy leaf "
-                        f"(paddy confidence: {paddy_prob*100:.1f}%). "
-                        f"This app only works with paddy (rice) leaf images. "
-                        f"Please upload the correct image and try again."
+                        f"Paddy confidence: {paddy_prob*100:.1f}%. Please upload a paddy leaf image only."
                     )
                     st.stop()
             else:
-                # Fallback if validator not loaded
                 preds_check = disease_model.predict(img_array, verbose=0)
                 if float(np.max(preds_check[0])) < 0.60:
-                    show_rejection(
-                        "Not a Paddy Leaf Detected!",
-                        "This does not appear to be a paddy leaf. "
-                        "Please upload a clear paddy (rice) leaf image."
-                    )
+                    show_rejection("Not a Paddy Leaf Detected!", "Please upload a clear paddy leaf image.")
                     st.stop()
 
-            # ── Step 3: Disease prediction ────────────────
             preds      = disease_model.predict(img_array, verbose=0)
             pred_idx   = int(np.argmax(preds[0]))
             confidence = float(preds[0][pred_idx])
             pred_class = class_names[str(pred_idx)]
 
-            # ── Step 4: Confidence threshold ─────────────
             if confidence < CONFIDENCE_THRESHOLD:
                 show_rejection(
                     "Low Confidence — Cannot Predict",
-                    f"The model is only {confidence*100:.1f}% confident, "
-                    f"which is below the minimum threshold of "
-                    f"{CONFIDENCE_THRESHOLD*100:.0f}%. "
-                    f"Please upload a clearer, well-lit paddy leaf image."
+                    f"Confidence {confidence*100:.1f}% is below 70% threshold. Upload a clearer image."
                 )
                 st.stop()
 
-        # ── Show result ───────────────────────────────────
-        sev      = DISEASE_INFO[pred_class]["severity"]
-        sev_col  = SEVERITY_COLOR[sev]
+        sev     = DISEASE_INFO[pred_class]["severity"]
+        sev_col = SEVERITY_COLOR[sev]
 
         st.markdown(f"""
         <div style="background:#f8f9fa; border-left:5px solid {sev_col};
@@ -241,7 +213,6 @@ with col2:
         </div>
         """, unsafe_allow_html=True)
 
-        # Confidence bar chart
         fig = go.Figure(go.Bar(
             x = list(class_names.values()),
             y = [float(p)*100 for p in preds[0]],
@@ -252,44 +223,30 @@ with col2:
             ]
         ))
         fig.update_layout(
-            title       = "Confidence Score per Class (%)",
-            xaxis_title = "Disease Class",
-            yaxis_title = "Confidence (%)",
-            height      = 280,
-            margin      = dict(t=40, b=40)
+            title="Confidence Score per Class (%)",
+            xaxis_title="Disease Class",
+            yaxis_title="Confidence (%)",
+            height=280,
+            margin=dict(t=40, b=40)
         )
         st.plotly_chart(fig, use_container_width=True)
 
+        st.markdown("---")
+        st.markdown("### 📚 Disease Details")
+        info = DISEASE_INFO[pred_class]
+        tab1, tab2, tab3 = st.tabs(["📖 Description", "🔬 Symptoms", "💊 Treatment"])
+        with tab1:
+            st.write(info["description"])
+        with tab2:
+            for s in info["symptoms"]:
+                st.markdown(f"- {s}")
+        with tab3:
+            for t in info["treatment"]:
+                st.markdown(f"✅ {t}")
+
     else:
         st.info("👆 Upload a paddy leaf image to see prediction results")
-        st.markdown("""
-        <div style="background:#eafaf1; border-left:5px solid #27ae60;
-                    padding:15px; border-radius:5px;">
-            <p style="margin:0; font-weight:bold; color:#27ae60;">⚠️ Important Notice</p>
-            <p style="margin:8px 0; font-size:14px;">
-                This app works with <strong>paddy (rice) leaf images only</strong>.
-                Uploading other plant leaves, faces, or unrelated images
-                will be automatically rejected.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
 
-# ── Disease details section ───────────────────────────────────
-if uploaded_file and "pred_class" in dir():
-    st.markdown("---")
-    st.markdown("### 📚 Disease Details")
-    info = DISEASE_INFO[pred_class]
-    tab1, tab2, tab3 = st.tabs(["📖 Description", "🔬 Symptoms", "💊 Treatment"])
-    with tab1:
-        st.write(info["description"])
-    with tab2:
-        for s in info["symptoms"]:
-            st.markdown(f"- {s}")
-    with tab3:
-        for t in info["treatment"]:
-            st.markdown(f"✅ {t}")
-
-# ── Footer ────────────────────────────────────────────────────
 st.markdown("---")
 st.markdown("""
 <p style="text-align:center; color:gray; font-size:13px;">
