@@ -1,12 +1,11 @@
 
 import streamlit as st
+import tensorflow as tf
 import numpy as np
 import json
 import cv2
 from PIL import Image
 import plotly.graph_objects as go
-
-from tensorflow import keras
 
 st.set_page_config(
     page_title = "Paddy Disease Detection",
@@ -16,11 +15,11 @@ st.set_page_config(
 
 @st.cache_resource
 def load_models():
-    disease_model = keras.models.load_model("best_model.keras")
+    disease_model = tf.keras.models.load_model("best_model.keras")
     with open("class_names.json", "r") as f:
         class_names = json.load(f)
     try:
-        validator = keras.models.load_model("paddy_validator.keras")
+        validator = tf.keras.models.load_model("paddy_validator.keras")
         validator_loaded = True
     except:
         validator = None
