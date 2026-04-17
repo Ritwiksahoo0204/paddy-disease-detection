@@ -245,24 +245,32 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown("### 🔬 Detectable Conditions")
+
     conditions = {
-        "🦠 Bacterialblight" : ("99.37%", "#e67e22"),
-        "💥 Blast"           : ("98.61%", "#e74c3c"),
-        "🟤 Brownspot"       : ("100.0%", "#f39c12"),
-        "✅ Healthy"         : ("100.0%", "#27ae60"),
-        "🔴 Tungro"          : ("100.0%", "#e74c3c")
+        "🦠 Bacterial blight": ("99.37%", "#e67e22"),
+        "💥 Blast": ("98.61%", "#e74c3c"),
+        "🟤 Brown spot": ("100.0%", "#f39c12"),
+        "✅ Healthy": ("100.0%", "#27ae60"),
+        "🔴 Tungro": ("100.0%", "#e74c3c")
     }
+
     for name, (acc, col) in conditions.items():
         st.markdown(
-            f'<div style="display:flex; justify-content:space-between; '
-            f'padding:4px 8px; margin:3px 0; border-radius:5px; '
-            f'background:#f8f9fa;">'
-            f'<span style="font-size:13px;">{name}</span>'
-            f'<span style="font-size:13px; color:{col}; font-weight:bold;">{acc}</span>'
-            f'</div>',
-            unsafe_allow_html=True
-        )
-
+          f"""
+          <div style="
+              display:flex;
+              justify-content:space-between;
+              padding:6px 10px;
+              margin:4px 0;
+              border-radius:6px;
+              background:#f8f9fa;
+          ">
+              <span style="font-size:13px; color:#000000;">{name}</span>
+              <span style="font-size:13px; color:{col}; font-weight:bold;">{acc}</span>
+          </div>
+          """,
+          unsafe_allow_html=True
+      )
     st.markdown("---")
     if validator_loaded:
         st.success("✅ Paddy validator: Active")
