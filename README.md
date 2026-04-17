@@ -1,17 +1,23 @@
 # Paddy Disease Detection 🌾
 
-## Live Demo
-> Deployment link will be added after Phase 6
+## 🔴 Live Demo
+> [Click here to open the app](https://huggingface.co/spaces/rs60204/paddy-disease-detection)
 
 ## ⚠️ Important
-This app is designed for **paddy (rice) leaves only**.
-- Other plant leaves will be **automatically rejected**
-- Irrelevant images (faces, objects) will be **rejected**
-- Low confidence predictions are **rejected**
+This app works with **paddy (rice) leaves only**.
+All other images are automatically rejected.
 
-## Disease Classes
-| Class | Per-Class Accuracy |
-|-------|--------------------|
+## 4-Step Prediction Pipeline
+| Step | Check | Action if Failed |
+|------|-------|-----------------|
+| 1 | Image quality | Rejects blurry / dark images |
+| 2 | Paddy validator | Rejects non-paddy images |
+| 3 | Disease prediction | Classifies disease |
+| 4 | Confidence threshold | Rejects if below 70% |
+
+## Disease Classes & Accuracy
+| Class | Accuracy |
+|-------|----------|
 | Bacterialblight | 99.37% |
 | Blast | 98.61% |
 | Brownspot | 100.0% |
@@ -19,11 +25,14 @@ This app is designed for **paddy (rice) leaves only**.
 | Tungro | 100.0% |
 | **Overall** | **99.58%** |
 
-## How It Works (4-Step Pipeline)
-1. Image quality check — rejects blurry/dark images
-2. Paddy validator — rejects non-paddy leaf images
-3. Disease prediction — MobileNetV2 classifies disease
-4. Confidence threshold — rejects low confidence results
+## Model Details
+| Detail | Info |
+|--------|------|
+| Architecture | MobileNetV2 (Transfer Learning) |
+| Pretrained on | ImageNet |
+| Training Images | 7,220 |
+| Overall Accuracy | 99.58% |
+| Validator | Binary Paddy Classifier |
 
 ## Project Phases
 | Phase | Task | Status |
@@ -33,23 +42,13 @@ This app is designed for **paddy (rice) leaves only**.
 | Phase 3 | Model Building | ✅ Done |
 | Phase 4 | Evaluation — 99.58% | ✅ Done |
 | Phase 5 | Streamlit Web App | ✅ Done |
-| Phase 6 | Deployment | ⏳ Pending |
+| Phase 6 | Deployment (HF Spaces) | ✅ Done |
 
-## Model Details
-| Detail | Info |
-|--------|------|
-| Architecture | MobileNetV2 (Transfer Learning) |
-| Framework | TensorFlow / Keras |
-| Overall Accuracy | 99.58% |
-| Input Size | 224 x 224 x 3 |
-| Min Confidence | 70% |
-
-## How to Run Locally
-
+## Run Locally
+```bash
+pip install -r requirements.txt
+streamlit run app.py
+```
 
 ## Tech Stack
-- Python 3 / TensorFlow / Keras
-- MobileNetV2 Transfer Learning
-- Binary Paddy Validator
-- Streamlit / Plotly / OpenCV
-- Google Colab
+Python • TensorFlow • Keras • MobileNetV2 • Streamlit • Plotly • OpenCV • Docker • Hugging Face Spaces
