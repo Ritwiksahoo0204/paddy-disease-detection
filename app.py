@@ -4,6 +4,7 @@ import numpy as np
 import json
 from PIL import Image
 import plotly.graph_objects as go
+import database
 
 # ── Page config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -186,6 +187,56 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# ── Auth Check ────────────────────────────────────────────────────────────────
+if "logged_in" not in st.session_state:
+    st.session_state["logged_in"] = False
+if "username" not in st.session_state:
+    st.session_state["username"] = None
+if "user_id" not in st.session_state:
+    st.session_state["user_id"] = None
+
+def auth_ui():
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown("<div class='metric-card'>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align:center;'>🌾 Welcome to Paddy AI</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align:center;'>Please log in or sign up to continue</p>", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        t1, t2 = st.tabs(["🔒 Log In", "📝 Sign Up"])
+        with t1:
+            login_user = st.text_input("Username", key="login_user")
+            login_pass = st.text_input("Password", type="password", key="login_pass")
+            if st.button("Log In", use_container_width=True):
+                success, uid = database.authenticate_user(login_user, login_pass)
+                if success:
+                    st.session_state["logged_in"] = True
+                    st.session_state["username"] = login_user
+                    st.session_state["user_id"] = uid
+                    st.rerun()
+                else:
+                    st.error("Invalid username or password.")
+        with t2:
+            reg_user = st.text_input("New Username", key="reg_user")
+            reg_pass = st.text_input("New Password", type="password", key="reg_pass")
+            reg_pass_conf = st.text_input("Confirm Password", type="password", key="reg_pass_conf")
+            if st.button("Sign Up", use_container_width=True):
+                if not reg_user or not reg_pass:
+                    st.error("Please fill in all fields.")
+                elif reg_pass != reg_pass_conf:
+                    st.error("Passwords do not match.")
+                else:
+                    success, msg = database.create_user(reg_user, reg_pass)
+                    if success:
+                        st.success(msg + " You can now log in via the Log In tab.")
+                    else:
+                        st.error(msg)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+if not st.session_state["logged_in"]:
+    auth_ui()
+    st.stop()
+
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 DISEASE_INFO = {
@@ -294,6 +345,17 @@ def load_model():
         class_names = json.load(f)
     return model, class_names
 
+@st.cache_resource(show_spinner=False)
+def load_validator():
+    import os
+    if os.path.exists("paddy_validator.keras"):
+        try:
+            return tf.keras.models.load_model("paddy_validator.keras")
+        except Exception as e:
+            st.error(f"Error loading validator model: {e}")
+            return None
+    return None
+
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def preprocess_image(image: Image.Image) -> np.ndarray:
@@ -302,81 +364,48 @@ def preprocess_image(image: Image.Image) -> np.ndarray:
     return np.expand_dims(arr, axis=0)
 
 
-def check_leaf_color(image: Image.Image) -> tuple[bool, float]:
-    """
-    Converts image to HSV and checks if it contains enough
-    green/yellow-green pixels to plausibly be a leaf.
-    Paddy leaves (healthy or diseased) are mostly green, yellow-green,
-    yellow, or brownish-green in HSV space.
-    Returns (is_leaf_like, green_ratio).
-    """
-    import colorsys
-    img_rgb = image.convert("RGB").resize((128, 128
-    ))
-    pixels = list(img_rgb.getdata())
-    leaf_pixels = 0
-    total = len(pixels)
-    for r, g, b in pixels:
-        h, s, v = colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
-        h_deg = h * 360
-        # Leaf-like hues: green (60-165°) plus yellow (40-60°) plus brown (15-40° with low sat)
-        # Also skip very dark or very washed-out pixels
-        if v < 0.08 or v > 0.97:          # too dark / too bright (sky, white bg)
-            continue
-        if s < 0.08:                       # near-grey pixels (not leaf)
-            continue
-        # Green family: 50° – 170°  (covers healthy + diseased yellowing)
-        if 40 <= h_deg <= 170:
-            leaf_pixels += 1
-        # Brownish-orange (diseased lesions): 15° – 40° with decent saturation
-        elif 15 <= h_deg < 40 and s >= 0.25:
-            leaf_pixels += 1
-    green_ratio = leaf_pixels / max(total, 1)
-    return green_ratio >= 0.10, green_ratio   # at least 10 % leaf-like pixels
-
-
 def is_paddy_leaf(
     image: Image.Image,
     predictions: np.ndarray,
+    validator_model,
     conf_threshold: float = 80.0,
 ):
     """
-    Multi-factor validation:
-      1. Color check  – image must contain enough green/leaf-like pixels.
-      2. Confidence   – model must be ≥ conf_threshold% sure of its prediction.
-      3. Entropy gate – if the softmax distribution is very flat the model is
-                        confused, which usually means the image is not paddy.
-    Returns (is_valid: bool, reason: str, confidence: float, green_ratio: float)
+    Validation using the dedicated binary classification model
+    (0 = not paddy, 1 = paddy) and model confidence.
     """
     max_conf = float(np.max(predictions[0])) * 100
-
-    # ── 1. Color / structure check ───────────────────────────────────────────
-    color_ok, green_ratio = check_leaf_color(image)
+    green_ratio = 1.0  # Placeholder for backward compatibility
+    
+    # ── 1. Binary AI Validator Check ─────────────────────────────────────────
+    if validator_model is not None:
+        img_array = preprocess_image(image)
+        prob = float(validator_model.predict(img_array, verbose=0)[0][0])
+        # Threshold 0.6 from the notebook
+        if prob < 0.6:
+            return False, f"AI Validator determined image is NOT a paddy leaf (Confidence: {(1-prob)*100:.1f}%)", max_conf, prob
 
     # ── 2. Softmax entropy check ─────────────────────────────────────────────
     probs = predictions[0].astype(np.float64)
     probs = np.clip(probs, 1e-10, 1.0)
     entropy = float(-np.sum(probs * np.log(probs)))
-    max_entropy = float(np.log(len(probs)))      # worst-case (uniform)
-    entropy_ratio = entropy / max_entropy         # 0=certain, 1=fully confused
-    entropy_ok = entropy_ratio < 0.85            # reject if model is very unsure
+    max_entropy = float(np.log(len(probs)))      
+    entropy_ratio = entropy / max_entropy         
+    entropy_ok = entropy_ratio < 0.85            
 
     # ── 3. Confidence threshold ──────────────────────────────────────────────
     conf_ok = max_conf >= conf_threshold
 
-    is_valid = color_ok and conf_ok and entropy_ok
+    is_valid = conf_ok and entropy_ok
 
-    # Build a human-readable reason for rejection
     if is_valid:
         reason = "OK"
     else:
         parts = []
-        if not color_ok:
-            parts.append(f"insufficient leaf-like color ({green_ratio*100:.0f}% green pixels, need ≥10%)")
         if not conf_ok:
-            parts.append(f"low model confidence ({max_conf:.1f}%, need ≥{conf_threshold}%)")
+            parts.append(f"low disease model confidence ({max_conf:.1f}%, need ≥{conf_threshold}%)")
         if not entropy_ok:
-            parts.append(f"model is uncertain (entropy {entropy_ratio*100:.0f}% of max)")
+            parts.append(f"disease model is uncertain (entropy {entropy_ratio*100:.0f}% of max)")
         reason = " · ".join(parts)
 
     return is_valid, reason, max_conf, green_ratio
@@ -412,8 +441,9 @@ def confidence_bar_chart(class_names: dict, predictions: np.ndarray, pred_idx: i
 
 
 # ── Load model ────────────────────────────────────────────────────────────────
-with st.spinner("🌱 Loading model..."):
+with st.spinner("🌱 Loading AI models..."):
     model, class_names = load_model()
+    validator_model = load_validator()
 
 
 # ── Hero Header ───────────────────────────────────────────────────────────────
@@ -442,6 +472,16 @@ st.markdown("<br>", unsafe_allow_html=True)
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("## 🌾 Paddy Disease AI")
+    
+    st.markdown(f"**👤 Hello, {st.session_state['username']}**")
+    if st.button("Log Out", use_container_width=True):
+        st.session_state["logged_in"] = False
+        st.session_state["username"] = None
+        st.session_state["user_id"] = None
+        st.rerun()
+        
+    st.markdown("---")
+    app_page = st.radio("Navigation", ["🔍 Detect Disease", "📖 My History"], label_visibility="collapsed")
     st.markdown("---")
 
     # ── Theme switcher ────────────────────────────────────────────────────────
@@ -490,6 +530,23 @@ with st.sidebar:
     st.markdown("---")
     st.warning("⚠️ **Paddy leaves only.** Other images will be rejected automatically.")
 
+
+if app_page == "📖 My History":
+    st.markdown("### 📋 Your Recent Scans")
+    history = database.get_user_activity(st.session_state["user_id"])
+    if not history:
+        st.info("You haven't scanned any images yet.")
+    else:
+        for entry in history:
+            st.markdown(f"""
+            <div class="result-card" style="border-color:#52b788; margin-bottom:12px;">
+                <h4 style="color:#52b788; margin:0;">{entry['predicted_class']} ({entry['confidence']:.1f}%)</h4>
+                <p style="margin:4px 0 0; font-size:0.85rem; color:#95d5b2;">
+                    Severity: <b>{entry['severity']}</b> | Date: {entry['timestamp']} | Image: {entry['image_name']}
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+    st.stop()
 
 # ── Main Layout ───────────────────────────────────────────────────────────────
 col_upload, col_result = st.columns([1, 1], gap="large")
@@ -589,7 +646,7 @@ with col_result:
             pred_class  = class_names[str(pred_idx)]
             confidence  = float(predictions[0][pred_idx]) * 100
 
-        is_paddy, reject_reason, max_conf, green_ratio = is_paddy_leaf(image, predictions)
+        is_paddy, reject_reason, max_conf, green_ratio = is_paddy_leaf(image, predictions, validator_model)
 
         if not is_paddy:
             st.markdown(f"""
@@ -620,6 +677,19 @@ with col_result:
             info     = DISEASE_INFO[pred_class]
             severity = info["severity"]
             sc       = SEVERITY_COLORS[severity]
+
+            # Record activity once per unique image
+            current_image_hash = str(hash(image.tobytes()))
+            if st.session_state.get("last_recorded_img") != current_image_hash:
+                img_name_to_save = source_label.split(" |")[0].replace("📁 ", "").strip() if "📁" in source_label else "Camera Snapshot"
+                database.record_activity(
+                    st.session_state["user_id"], 
+                    img_name_to_save, 
+                    pred_class, 
+                    confidence, 
+                    severity
+                )
+                st.session_state["last_recorded_img"] = current_image_hash
 
             # Result card
             st.markdown(f"""
