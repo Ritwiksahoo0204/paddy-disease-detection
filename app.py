@@ -524,40 +524,17 @@ if uploaded_file and st.session_state.get("pred_class") and st.session_state.get
 
     with tab3:
         st.markdown("**Recommended treatment steps:**")
-
         for i, step in enumerate(DISEASE_INFO[pred_class]["treatment"], 1):
             st.markdown(f"""
-            <div style="
-                display:flex;
-                align-items:flex-start;
-                margin:10px 0;
-                background:#f8f9fa;
-                border:1px solid #e0e0e0;
-                padding:14px 16px;
-                border-radius:10px;
-            ">
-                <span style="
-                    background:#27ae60;
-                    color:#ffffff;
-                    border-radius:50%;
-                    width:28px;
-                    height:28px;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    font-size:14px;
-                    font-weight:bold;
-                    flex-shrink:0;
-                    margin-right:12px;
-                ">{i}</span>
-
-                <span style="
-                    font-size:14px;
-                    color:#333;
-                    line-height:1.6;
-                ">
-                    {step}
-                </span>
+            <div style="display:flex; align-items:flex-start; margin:8px 0;
+                        background:#1e1e1e; border:1px solid #333;
+                        padding:12px 14px; border-radius:8px;">
+                <span style="background:#27ae60; color:#ffffff; border-radius:50%;
+                             width:26px; height:26px; display:inline-flex;
+                             align-items:center; justify-content:center;
+                             font-size:13px; font-weight:bold; flex-shrink:0;
+                             margin-right:12px;">{i}</span>
+                <span style="font-size:14px; color:#f0f0f0; line-height:1.6;">{step}</span>
             </div>
             """, unsafe_allow_html=True)
 
