@@ -312,7 +312,7 @@ with col1:
     )
     if uploaded_file:
         image = Image.open(uploaded_file)
-        st.image(image, caption=f"📁 {uploaded_file.name}", use_column_width=True)
+        st.image(image, caption=f"📁 {uploaded_file.name}", use_container_width=True)
 
         # Image info
         w, h = image.size
@@ -342,6 +342,8 @@ with col2:
     st.markdown("### 🔍 Analysis Results")
 
     if not uploaded_file:
+        st.session_state.pop("pred_class", None)
+        st.session_state.pop("confidence", None)
         st.markdown("""
         <div style="background:#f8f9fa; border-radius:12px; padding:30px;
                     text-align:center; color:#aaa; margin-top:10px;">
@@ -392,6 +394,8 @@ with col2:
             pred_idx   = int(np.argmax(preds[0]))
             confidence = float(preds[0][pred_idx])
             pred_class = class_names[str(pred_idx)]
+            st.session_state["pred_class"] = pred_class
+            st.session_state["confidence"] = confidence
 
             # ── Step 4: Confidence Threshold ──────────────
             if confidence < CONFIDENCE_THRESHOLD:
@@ -480,10 +484,12 @@ with col2:
         st.plotly_chart(fig, use_container_width=True)
 
 # ── Disease Details Section ──────────────────────────────────
-if uploaded_file and "pred_class" in dir() and confidence >= CONFIDENCE_THRESHOLD:
+if uploaded_file and st.session_state.get("pred_class") and st.session_state.get("confidence", 0) >= CONFIDENCE_THRESHOLD:
     st.markdown("---")
     st.markdown("### 📚 Detailed Disease Information")
 
+    pred_class = st.session_state["pred_class"]
+    confidence = st.session_state["confidence"]
     tab1, tab2, tab3 = st.tabs(["📖 Description", "🔬 Symptoms", "💊 Treatment"])
 
     with tab1:

@@ -1,64 +1,54 @@
-# Paddy Disease Detection
+# Paddy Disease Detection 🌾
 
-## Project Overview
-A deep learning project to detect paddy leaf diseases using MobileNetV2 transfer learning.
-Built using TensorFlow, Keras, and Streamlit.
+## 🔴 Live Demo
+> [Click here to open the app](https://huggingface.co/spaces/rs60204/paddy-disease-detection)
 
-## Disease Classes
-| Class | Images | Status |
-|-------|--------|--------|
-| Bacterialblight | 1584 | OK |
-| Blast | 1440 | OK |
-| Brownspot | 1400 | OK |
-| Healthy | 1488 | OK |
-| Tungro | 1308 | OK |
-| TOTAL | 7220 | OK |
+## ⚠️ Important
+This app works with **paddy (rice) leaves only**.
+All other images are automatically rejected.
 
-## Phase 1 - Dataset Setup (Completed)
-- Total images : 7220 across 5 classes
-- Well balanced dataset, no class imbalance issues
+## 4-Step Prediction Pipeline
+| Step | Check | Action if Failed |
+|------|-------|-----------------|
+| 1 | Image quality | Rejects blurry / dark images |
+| 2 | Paddy validator | Rejects non-paddy images |
+| 3 | Disease prediction | Classifies disease |
+| 4 | Confidence threshold | Rejects if below 70% |
 
-## Phase 2 - Preprocessing (Completed)
-- Normalized pixel values, applied data augmentation
-- 80% train / 20% validation split
-- Computed class weights for imbalance handling
-
-## Phase 3 - Model Building (Completed)
-- Architecture  : MobileNetV2 (Transfer Learning)
-- Pretrained on : ImageNet
-- Custom head   : GAP → BatchNorm → Dense(256) → Dropout → Dense(128) → Dropout → Softmax
-- Training      : 2-phase (frozen base → fine-tuning top 30 layers)
-- Model size    : 25.03 MB
-
-## Phase 4 - Evaluation (Completed)
-- Overall Accuracy : 99.58%
-
-### Per Class Accuracy
+## Disease Classes & Accuracy
 | Class | Accuracy |
 |-------|----------|
 | Bacterialblight | 99.37% |
 | Blast | 98.61% |
-| Brownspot | 100.00% |
-| Healthy | 100.00% |
-| Tungro | 100.00% |
+| Brownspot | 100.0% |
+| Healthy | 100.0% |
+| Tungro | 100.0% |
+| **Overall** | **99.58%** |
 
-## Upcoming Phases
-- Phase 5 : Streamlit Web App
-- Phase 6 : Deployment on Streamlit Cloud
-
-## Dataset Details
+## Model Details
 | Detail | Info |
 |--------|------|
-| Source | Mendeley + Kaggle |
-| Total Images | 7220 |
-| Input Size | 224 x 224 x 3 |
-| Train Split | 80% |
-| Validation Split | 20% |
+| Architecture | MobileNetV2 (Transfer Learning) |
+| Pretrained on | ImageNet |
+| Training Images | 7,220 |
+| Overall Accuracy | 99.58% |
+| Validator | Binary Paddy Classifier |
+
+## Project Phases
+| Phase | Task | Status |
+|-------|------|--------|
+| Phase 1 | Dataset Setup | ✅ Done |
+| Phase 2 | Preprocessing | ✅ Done |
+| Phase 3 | Model Building | ✅ Done |
+| Phase 4 | Evaluation — 99.58% | ✅ Done |
+| Phase 5 | Streamlit Web App | ✅ Done |
+| Phase 6 | Deployment (HF Spaces) | ✅ Done |
+
+## Run Locally
+```bash
+pip install -r requirements.txt
+streamlit run app.py
+```
 
 ## Tech Stack
-- Python 3
-- TensorFlow / Keras
-- MobileNetV2
-- Streamlit
-- Google Colab
-- Plotly
+Python • TensorFlow • Keras • MobileNetV2 • Streamlit • Plotly • OpenCV • Docker • Hugging Face Spaces
