@@ -54,16 +54,16 @@ def get_theme_css(mode: str) -> str:
 
     elif mode == "☀️ Light":
         app_bg          = "linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 50%,#f0fdf4 100%)"
-        text_color      = "#14532d"
+        text_color      = "#000000"
         sidebar_bg      = "linear-gradient(180deg,#dcfce7 0%,#f0fdf4 100%)"
         sidebar_border  = "#86efac"
-        sidebar_text    = "#166534"
+        sidebar_text    = "#000000"
         card_bg         = "linear-gradient(135deg,rgba(187,247,208,.7),rgba(209,250,229,.7))"
         card_border     = "#4ade80"
-        card_h2         = "#15803d"
-        card_p          = "#166534"
+        card_h2         = "#000000"
+        card_p          = "#000000"
         hero_grad       = "linear-gradient(90deg,#15803d,#22c55e,#15803d)"
-        hero_sub        = "#166534"
+        hero_sub        = "#000000"
         upload_border   = "#4ade80"
         upload_bg       = "rgba(187,247,208,0.3)"
         upload_hover    = "#15803d"
@@ -72,16 +72,16 @@ def get_theme_css(mode: str) -> str:
         warn_bg         = "rgba(239,68,68,0.1)"
         warn_border     = "#ef4444"
         tab_list_bg     = "rgba(187,247,208,0.5)"
-        tab_text        = "#15803d"
+        tab_text        = "#000000"
         tab_sel_bg      = "#4ade80"
-        tab_sel_text    = "#14532d"
+        tab_sel_text    = "#000000"
         btn_bg          = "linear-gradient(135deg,#16a34a,#4ade80)"
         btn_shadow      = "rgba(74,222,128,0.45)"
         spinner_color   = "#16a34a"
         hr_color        = "#86efac"
-        footer_color    = "#15803d"
+        footer_color    = "#000000"
         theme_badge_bg  = "rgba(74,222,128,0.2)"
-        theme_badge_txt = "#15803d"
+        theme_badge_txt = "#000000"
 
     else:  # System default — uses prefers-color-scheme
         return """
@@ -113,22 +113,22 @@ h1 a,h2 a,h3 a,h4 a,h5 a,h6 a,[data-testid="stMarkdownContainer"] h1 a,
   hr{border-color:#1b4332!important;} .footer{color:#52b788;}
 }
 @media(prefers-color-scheme:light){
-  .stApp{background:linear-gradient(135deg,#f0fdf4,#ecfdf5 50%,#f0fdf4);color:#14532d;}
+  .stApp{background:linear-gradient(135deg,#f0fdf4,#ecfdf5 50%,#f0fdf4);color:#000000;}
   [data-testid="stSidebar"]{background:linear-gradient(180deg,#dcfce7,#f0fdf4);border-right:1px solid #86efac;}
-  [data-testid="stSidebar"] *{color:#166534!important;}
+  [data-testid="stSidebar"] *{color:#000000!important;}
   .metric-card{background:linear-gradient(135deg,rgba(187,247,208,.7),rgba(209,250,229,.7));border:1px solid #4ade80;}
-  .metric-card h2{color:#15803d;} .metric-card p{color:#166534;}
+  .metric-card h2{color:#000000;} .metric-card p{color:#000000;}
   .hero-title h1{background:linear-gradient(90deg,#15803d,#22c55e,#15803d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-  .hero-title p{color:#166534;}
+  .hero-title p{color:#000000;}
   .upload-box{border:2px dashed #4ade80;background:rgba(187,247,208,.3);}
   .upload-box:hover{border-color:#15803d;}
   .info-box{background:rgba(74,222,128,.15);border-left:4px solid #4ade80;}
   .warn-box{background:rgba(239,68,68,.1);border-left:4px solid #ef4444;}
   [data-baseweb="tab-list"]{background:rgba(187,247,208,.5)!important;}
-  [data-baseweb="tab"]{color:#15803d!important;}
-  [aria-selected="true"]{background:#4ade80!important;color:#14532d!important;}
+  [data-baseweb="tab"]{color:#000000!important;}
+  [aria-selected="true"]{background:#4ade80!important;color:#000000!important;}
   .stButton>button{background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;}
-  hr{border-color:#86efac!important;} .footer{color:#15803d;}
+  hr{border-color:#86efac!important;} .footer{color:#000000;}
 }
 """
 
@@ -196,18 +196,77 @@ if "user_id" not in st.session_state:
     st.session_state["user_id"] = None
 
 def auth_ui():
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.markdown("<div class='metric-card'>", unsafe_allow_html=True)
-        st.markdown("<h2 style='text-align:center;'>🌾 Welcome to Paddy AI</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center;'>Please log in or sign up to continue</p>", unsafe_allow_html=True)
-        st.markdown("<br>", unsafe_allow_html=True)
+    is_dark = st.session_state["theme"] in ["🌑 Dark", "🖥️ System Default"]
+    
+    bg_color = "linear-gradient(135deg, rgba(13,33,55,0.7), rgba(10,26,14,0.8))" if is_dark else "linear-gradient(135deg, rgba(255,255,255,0.85), rgba(240,253,244,0.9))"
+    border = "rgba(82,183,136,0.4)" if is_dark else "rgba(74,222,128,0.5)"
+    shadow = "rgba(0,0,0,0.5)" if is_dark else "rgba(21,128,61,0.15)"
+    text_grad = "linear-gradient(90deg, #52b788, #95d5b2, #52b788)" if is_dark else "linear-gradient(90deg, #15803d, #22c55e, #15803d)"
+    sub_color = "#95d5b2" if is_dark else "#000000"
+    input_bg = "rgba(0,0,0,0.2)" if is_dark else "rgba(255,255,255,0.6)"
+
+    st.markdown(f"""
+    <style>
+    .auth-card {{
+        background: {bg_color};
+        border: 1px solid {border};
+        border-radius: 24px;
+        padding: 50px 40px;
+        box-shadow: 0 15px 50px {shadow};
+        backdrop-filter: blur(20px);
+        margin-top: 5vh;
+        margin-bottom: 5vh;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }}
+    .auth-card:hover {{
+        transform: translateY(-5px);
+        box-shadow: 0 20px 60px {shadow};
+    }}
+    .auth-title {{
+        font-size: 2.8rem;
+        font-weight: 800;
+        text-align: center;
+        background: {text_grad};
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 5px;
+        letter-spacing: -0.5px;
+    }}
+    .auth-subtitle {{
+        text-align: center;
+        color: {sub_color};
+        font-size: 1.05rem;
+        margin-bottom: 35px;
+        opacity: 0.85;
+        font-weight: 500;
+    }}
+    /* Style Streamlit Inputs */
+    div[data-baseweb="input"] {{
+        background-color: {input_bg} !important;
+        border-radius: 12px !important;
+        border: 1px solid {border} !important;
+        transition: border 0.3s ease;
+    }}
+    div[data-baseweb="input"]:focus-within {{
+        border: 2px solid #52b788 !important;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+    _, col, _ = st.columns([1, 1.4, 1])
+    with col:
+        st.markdown("<div class='auth-card'>", unsafe_allow_html=True)
+        st.markdown("<div class='auth-title'>🌾 Paddy AI</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='auth-subtitle'>Sign in to your intelligent farming portal</div>", unsafe_allow_html=True)
         
-        t1, t2 = st.tabs(["🔒 Log In", "📝 Sign Up"])
+        t1, t2, t3 = st.tabs(["✨ Log In", "🚀 Sign Up", "🔐 Reset"])
+        
         with t1:
-            login_user = st.text_input("Username", key="login_user")
-            login_pass = st.text_input("Password", type="password", key="login_pass")
-            if st.button("Log In", use_container_width=True):
+            st.markdown("<br>", unsafe_allow_html=True)
+            login_user = st.text_input("Username", key="login_user", placeholder="Enter your username")
+            login_pass = st.text_input("Password", type="password", key="login_pass", placeholder="••••••••")
+            st.markdown("<br>", unsafe_allow_html=True)
+            if st.button("Access Dashboard", use_container_width=True):
                 success, uid = database.authenticate_user(login_user, login_pass)
                 if success:
                     st.session_state["logged_in"] = True
@@ -216,11 +275,14 @@ def auth_ui():
                     st.rerun()
                 else:
                     st.error("Invalid username or password.")
+                    
         with t2:
-            reg_user = st.text_input("New Username", key="reg_user")
-            reg_pass = st.text_input("New Password", type="password", key="reg_pass")
-            reg_pass_conf = st.text_input("Confirm Password", type="password", key="reg_pass_conf")
-            if st.button("Sign Up", use_container_width=True):
+            st.markdown("<br>", unsafe_allow_html=True)
+            reg_user = st.text_input("New Username", key="reg_user", placeholder="Choose a username")
+            reg_pass = st.text_input("New Password", type="password", key="reg_pass", placeholder="••••••••")
+            reg_pass_conf = st.text_input("Confirm Password", type="password", key="reg_pass_conf", placeholder="••••••••")
+            st.markdown("<br>", unsafe_allow_html=True)
+            if st.button("Create Account", use_container_width=True):
                 if not reg_user or not reg_pass:
                     st.error("Please fill in all fields.")
                 elif reg_pass != reg_pass_conf:
@@ -228,9 +290,33 @@ def auth_ui():
                 else:
                     success, msg = database.create_user(reg_user, reg_pass)
                     if success:
-                        st.success(msg + " You can now log in via the Log In tab.")
+                        # Automatically log them in
+                        _, uid = database.authenticate_user(reg_user, reg_pass)
+                        st.session_state["logged_in"] = True
+                        st.session_state["username"] = reg_user
+                        st.session_state["user_id"] = uid
+                        st.rerun()
                     else:
                         st.error(msg)
+                        
+        with t3:
+            st.markdown("<br>", unsafe_allow_html=True)
+            reset_user = st.text_input("Your Username", key="reset_user", placeholder="Enter your username")
+            reset_pass = st.text_input("New Password", type="password", key="reset_pass", placeholder="••••••••")
+            reset_pass_conf = st.text_input("Confirm New Password", type="password", key="reset_pass_conf", placeholder="••••••••")
+            st.markdown("<br>", unsafe_allow_html=True)
+            if st.button("Reset Password", use_container_width=True):
+                if not reset_user or not reset_pass:
+                    st.error("Please fill in all fields.")
+                elif reset_pass != reset_pass_conf:
+                    st.error("Passwords do not match.")
+                else:
+                    success, msg = database.update_password(reset_user, reset_pass)
+                    if success:
+                        st.success(msg + " You can now log in with your new password.")
+                    else:
+                        st.error(msg)
+                        
         st.markdown("</div>", unsafe_allow_html=True)
 
 if not st.session_state["logged_in"]:
@@ -412,24 +498,29 @@ def is_paddy_leaf(
 
 
 def confidence_bar_chart(class_names: dict, predictions: np.ndarray, pred_idx: int, sev_color: str):
+    is_dark = st.session_state["theme"] in ["🌑 Dark", "🖥️ System Default"]
+    text_color = "#b7e4c7" if is_dark else "#000000"
+    title_color = "#95d5b2" if is_dark else "#000000"
+    grid_color = "rgba(82,183,136,0.1)" if is_dark else "rgba(21,128,61,0.15)"
+    
     labels = [class_names[str(i)] for i in range(len(class_names))]
     values = [float(p) * 100 for p in predictions[0]]
-    colors = [sev_color if i == pred_idx else "rgba(82,183,136,0.25)" for i in range(len(class_names))]
+    colors = [sev_color if i == pred_idx else ("rgba(82,183,136,0.25)" if is_dark else "rgba(74,222,128,0.4)") for i in range(len(class_names))]
 
     fig = go.Figure(go.Bar(
         x=labels,
         y=values,
         marker_color=colors,
-        marker_line_color="rgba(255,255,255,0.1)",
+        marker_line_color="rgba(255,255,255,0.1)" if is_dark else "rgba(0,0,0,0.1)",
         marker_line_width=1,
         text=[f"{v:.1f}%" for v in values],
         textposition="outside",
-        textfont=dict(color="#b7e4c7", size=11),
+        textfont=dict(color=text_color, size=11),
     ))
     fig.update_layout(
-        title=dict(text="Confidence Score per Class", font=dict(color="#95d5b2", size=14)),
-        xaxis=dict(tickfont=dict(color="#95d5b2"), showgrid=False, zeroline=False),
-        yaxis=dict(tickfont=dict(color="#95d5b2"), gridcolor="rgba(82,183,136,0.1)",
+        title=dict(text="Confidence Score per Class", font=dict(color=title_color, size=14)),
+        xaxis=dict(tickfont=dict(color=text_color), showgrid=False, zeroline=False),
+        yaxis=dict(tickfont=dict(color=text_color), gridcolor=grid_color,
                    range=[0, 115], zeroline=False),
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
@@ -478,10 +569,14 @@ with st.sidebar:
         st.session_state["logged_in"] = False
         st.session_state["username"] = None
         st.session_state["user_id"] = None
+        st.session_state["theme"] = "🌑 Dark"  # Force dark mode on logout
         st.rerun()
         
     st.markdown("---")
-    app_page = st.radio("Navigation", ["🔍 Detect Disease", "📖 My History"], label_visibility="collapsed")
+    nav_options = ["🔍 Detect Disease", "📖 My History"]
+    if st.session_state.get("username") == "Ritwiksahoo0204":
+        nav_options.append("👑 Admin Panel")
+    app_page = st.radio("Navigation", nav_options, label_visibility="collapsed")
     st.markdown("---")
 
     # ── Theme switcher ────────────────────────────────────────────────────────
@@ -517,7 +612,7 @@ with st.sidebar:
     st.markdown("### 🎯 Class Accuracy")
     for cls, info in DISEASE_INFO.items():
         acc = CLASS_ACCURACY[cls]
-        st.markdown(f"{info['emoji']} **{cls}** — `{acc}`")
+        st.markdown(f"{info['emoji']} **{cls}** — **{acc}**")
 
     st.markdown("---")
     st.markdown("### 📖 How to Use")
@@ -546,6 +641,62 @@ if app_page == "📖 My History":
                 </p>
             </div>
             """, unsafe_allow_html=True)
+    st.stop()
+
+if app_page == "👑 Admin Panel":
+    
+    # 🚨 SECURITY CHECK: Only let YOU see the admin panel!
+    if st.session_state["username"] != "Ritwiksahoo0204": # Change this if your username is different
+        st.error("⛔ Access Denied. You do not have admin privileges.")
+        st.stop()
+        
+    st.markdown("### 👑 User Database (Admin)")
+    
+    # Connect to the database and read the tables
+    import sqlite3
+    import pandas as pd
+    
+    conn = sqlite3.connect(database.DB_PATH)
+    
+    # 1. Show all Registered Users
+    st.markdown("#### 👤 Registered Users")
+    users_df = pd.read_sql_query("SELECT id, username, created_at, last_login FROM users", conn)
+    st.dataframe(users_df, use_container_width=True, hide_index=True)
+    
+    # 2. Show all User Activity (What images they scanned)
+    st.markdown("#### 📈 Global Activity Log")
+    activity_df = pd.read_sql_query("SELECT user_id, image_name, predicted_class, confidence, timestamp FROM activity", conn)
+    st.dataframe(activity_df, use_container_width=True, hide_index=True)
+    
+    conn.close()
+    
+    # Add a Download Button so you can download the .db file directly from the app
+    import os
+    if os.path.exists(database.DB_PATH):
+        with open(database.DB_PATH, "rb") as file:
+            st.download_button(
+                label="💾 Download Raw Database File (.db)",
+                data=file,
+                file_name="paddy_app.db",
+                mime="application/octet-stream"
+            )
+            
+    st.markdown("---")
+    st.markdown("#### 🔑 Manage User Passwords")
+    with st.expander("Force Reset a User's Password"):
+        st.info("As an admin, you can reset any user's password without needing their old one.")
+        admin_reset_user = st.text_input("Target Username", key="admin_reset_user")
+        admin_reset_pass = st.text_input("New Password", type="password", key="admin_reset_pass")
+        if st.button("Force Reset Password", type="primary"):
+            if not admin_reset_user or not admin_reset_pass:
+                st.error("Please fill in both fields.")
+            else:
+                success, msg = database.update_password(admin_reset_user, admin_reset_pass)
+                if success:
+                    st.success(f"Successfully changed password for user: {admin_reset_user}")
+                else:
+                    st.error(msg)
+                    
     st.stop()
 
 # ── Main Layout ───────────────────────────────────────────────────────────────

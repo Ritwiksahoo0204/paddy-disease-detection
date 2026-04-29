@@ -3,7 +3,10 @@ import bcrypt
 from datetime import datetime
 import os
 
-DB_PATH = 'paddy_app.db'
+if os.path.exists('/content/drive/MyDrive/Project_2k26/'):
+    DB_PATH = '/content/drive/MyDrive/Project_2k26/paddy_app.db'
+else:
+    DB_PATH = 'paddy_app.db'
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
@@ -95,6 +98,23 @@ def authenticate_user(username, password):
     conn.close()
     return False, None
 
+def update_password(username, new_password):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+        if not cursor.fetchone():
+            return False, "Username not found. Please check spelling."
+            
+        hashed = hash_password(new_password)
+        cursor.execute("UPDATE users SET password_hash = ? WHERE username = ?", (hashed, username))
+        conn.commit()
+        return True, "Password reset successfully."
+    except Exception as e:
+        return False, str(e)
+    finally:
+        conn.close()
+
 def record_activity(user_id, image_name, predicted_class, confidence, severity):
     if not user_id:
         return False
@@ -128,6 +148,20 @@ def get_user_activity(user_id):
     results = cursor.fetchall()
     conn.close()
     
-    return [{"image_name": r[0], "predicted_class": r[1], "confidence": r[2], "severity": r[3], "timestamp": r[4]} for r in results]
+    # Format as list of dicts
+    return [
+        {
+            "image_name": r[0],
+            "predicted_class": r[1],
+            "confidence": r[2],
+            "severity": r[3],
+            "timestamp": r[4]
+        }
+        for r in results
+    ]
 
+# Initialize on import
 init_db()
+
+# Automatically create the default admin account if it doesn't exist
+create_user("Ritwiksahoo0204", "0204")
