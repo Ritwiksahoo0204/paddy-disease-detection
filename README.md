@@ -51,18 +51,51 @@ Built using TensorFlow, Keras, and Streamlit.
 | Vertical flip | Yes |
 | Brightness range | 0.8 to 1.2 |
 
+## Phase 3 - Model Building (Completed)
+- Architecture  : MobileNetV2 (Transfer Learning)
+- Pretrained on : ImageNet
+- Custom head   : GAP → BatchNorm → Dense(256) → Dropout(0.4) → Dense(128) → Dropout(0.3) → Softmax(5)
+- Data pipeline : tf.data (replaced ImageDataGenerator for GPU-parallel loading)
+
+### Training Strategy
+| Phase | Epochs | LR | Layers Trained |
+|-------|--------|----|----------------|
+| Phase 1 — Frozen | 15 | 1e-4 | Custom head only |
+| Phase 2 — Fine-tune | 16 → 39 | 1e-5 | Last 30 MobileNetV2 layers |
+
+### Accuracy Progression
+| Epoch | Val Accuracy |
+|-------|-------------|
+| 26 | 92.808% |
+| 28 | 93.036% |
+| 31 | 93.600% |
+| 34 | 93.901% |
+| 35 | 94.128% |
+| 37 | **94.265%** ← Best |
+
+### Final Results
+| Metric | Value |
+|--------|-------|
+| Validation Accuracy | **94.26%** |
+| Validation Loss | 0.1624 |
+
+### Phase 3 Output Files
+| File | Description |
+|------|-------------|
+| best_model.keras | Trained MobileNetV2 model (94.26% accuracy) |
+| class_names.json | Class index to name mapping |
+| training_curves_phase2.png | Phase 2 fine-tuning curves |
+
 ## Upcoming Phases
-- Phase 3 : Model Building (MobileNetV2)
 - Phase 4 : Model Evaluation
-- Phase 5 : React App
-- Phase 6 : Deployment
+- Phase 5 : Streamlit Web App
+- Phase 6 : Deployment on Streamlit Cloud
 
 ## Dataset Details
 | Detail | Info |
 |--------|------|
 | Source | Mendeley + Kaggle |
 | Total Images | 21,974 |
-| Image Format | JPG / PNG |
 | Input Size | 224 x 224 x 3 |
 | Train Split | 80% |
 | Validation Split | 20% |
