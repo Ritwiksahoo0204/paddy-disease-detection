@@ -88,8 +88,8 @@ Built using TensorFlow, Keras, and Streamlit.
 
 ## Upcoming Phases
 - Phase 4 : Model Evaluation
-- Phase 5 : Streamlit Web App
-- Phase 6 : Deployment on Streamlit Cloud
+- Phase 5 : React App
+- Phase 6 : Deployment
 
 ## Dataset Details
 | Detail | Info |
