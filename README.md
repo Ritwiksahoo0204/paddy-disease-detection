@@ -63,28 +63,39 @@ Built using TensorFlow, Keras, and Streamlit.
 | Phase 1 — Frozen | 15 | 1e-4 | Custom head only |
 | Phase 2 — Fine-tune | 16 → 39 | 1e-5 | Last 30 MobileNetV2 layers |
 
-### Accuracy Progression
-| Epoch | Val Accuracy |
-|-------|-------------|
-| 26 | 92.808% |
-| 28 | 93.036% |
-| 31 | 93.600% |
-| 34 | 93.901% |
-| 35 | 94.128% |
-| 37 | **94.265%** ← Best |
-
 ### Final Results
 | Metric | Value |
 |--------|-------|
 | Validation Accuracy | **94.26%** |
 | Validation Loss | 0.1624 |
 
-### Phase 3 Output Files
+## Phase 3B - Validator Training (Completed)
+- Binary classifier to reject non-paddy images
+- Architecture : MobileNetV2 (frozen) → GAP → Dropout(0.3) → Dense(1, sigmoid)
+- Threshold    : 0.6 (prob >= 0.6 → paddy, prob < 0.6 → not paddy)
+
+### Validator Dataset
+| Class | Images |
+|-------|--------|
+| Paddy | 1000 (200 × 5 classes) |
+| Not Paddy | 1000 (from zip) |
+| Total | 2000 |
+
+### How Validator Works in App
+```
+User uploads image
+        ↓
+Validator checks probability
+        ↓ prob >= 0.6          ↓ prob < 0.6
+Main Model               Reject image
+predicts disease         show error message
+```
+
+### Phase 3B - Output Files
 | File | Description |
 |------|-------------|
-| best_model.keras | Trained MobileNetV2 model (94.26% accuracy) |
-| class_names.json | Class index to name mapping |
-| training_curves_phase2.png | Phase 2 fine-tuning curves |
+| paddy_validator.keras | Binary validator model |
+| Phase3b_Validator_Training.ipynb | Training notebook |
 
 ## Upcoming Phases
 - Phase 4 : Model Evaluation
