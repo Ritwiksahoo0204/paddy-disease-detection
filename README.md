@@ -17,19 +17,41 @@ Built using TensorFlow, Keras, and Streamlit.
 ## Phase 1 - Dataset Setup (Completed)
 - Collected dataset from Mendeley Rice Leaf Disease Dataset
 - Added Healthy class from Kaggle Paddy Doctor dataset
-- Total images : 22,000+
+- Total images : 21,974
 - Total classes : 5
 - Dataset is well balanced across all classes
 - No class imbalance issues detected
 
-### Phase 1 Outputs
-| File | Description |
-|------|-------------|
-| class_distribution.png | Bar chart showing image count per class |
-| sample_images.png | One sample image from each disease class |
+## Phase 2 - Preprocessing (Completed)
+- Normalized pixel values from 0-255 to 0-1
+- Applied data augmentation techniques
+- Split dataset 80% train / 20% validation
+- Training batches   : 550
+- Validation batches : 138
+- Batch image shape  : (32, 224, 224, 3)
+- Computed class weights for imbalance handling
+
+### Class Weights
+| Class | Weight |
+|-------|--------|
+| Bacterialblight | 1.0110 |
+| Blast | 0.9198 |
+| Brownspot | 0.6794 |
+| Healthy | 1.4887 |
+| Tungro | 1.2820 |
+
+### Augmentation Techniques Used
+| Technique | Value |
+|-----------|-------|
+| Rotation | 20 degrees |
+| Width shift | 10% |
+| Height shift | 10% |
+| Zoom | 15% |
+| Horizontal flip | Yes |
+| Vertical flip | Yes |
+| Brightness range | 0.8 to 1.2 |
 
 ## Upcoming Phases
-- Phase 2 : Data Preprocessing and Augmentation
 - Phase 3 : Model Building (MobileNetV2)
 - Phase 4 : Model Evaluation
 - Phase 5 : React App
@@ -39,7 +61,7 @@ Built using TensorFlow, Keras, and Streamlit.
 | Detail | Info |
 |--------|------|
 | Source | Mendeley + Kaggle |
-| Total Images | 21,000+ |
+| Total Images | 21,974 |
 | Image Format | JPG / PNG |
 | Input Size | 224 x 224 x 3 |
 | Train Split | 80% |
