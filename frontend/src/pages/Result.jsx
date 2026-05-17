@@ -197,7 +197,8 @@ export default function Result({ language, result, setResult }) {
     setFeedback(correct);
     if (result.prediction_id) {
       try {
-        await fetch(`/feedback/${result.prediction_id}`, {
+        const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
+        await fetch(`${API}/feedback/${result.prediction_id}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ was_correct: correct ? "yes" : "no" }),
