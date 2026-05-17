@@ -74,8 +74,25 @@ def verify_admin(credentials: HTTPBasicCredentials = Depends(security)):
 # ── Load Models ─────────────────────────────────────────────────────────────
 logger.info("Loading models...")
 try:
-    main_model = tf.keras.models.load_model(str(MODELS_DIR / "best_model.keras"))
-    validator  = tf.keras.models.load_model(str(MODELS_DIR / "paddy_validator.keras"))
+    # Limit TensorFlow memory usage
+    import tensorflow as tf
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    tf.config.threading.set_inter_op_parallelism_threads(1)
+    tf.config.threading.set_intra_op_parallelism_threads(1)
+    
+    # Limit memory growth
+    import os
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    os.environ['MALLOC_TRIM_THRESHOLD_'] = '100000'
+
+    main_model = tf.keras.models.load_model(
+        str(MODELS_DIR / "best_model.keras"),
+        compile=False  # saves memory
+    )
+    validator = tf.keras.models.load_model(
+        str(MODELS_DIR / "paddy_validator.keras"),
+        compile=False  # saves memory
+    )
     with open(MODELS_DIR / "class_names.json") as f:
         class_names = json.load(f)
     logger.info("Models loaded successfully!")
