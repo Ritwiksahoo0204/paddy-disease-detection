@@ -33,8 +33,9 @@ export default function Dashboard() {
   async function loadStats() {
     setLoading(true);
     try {
+      const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
       const creds = btoa(`${ADMIN_USER}:${ADMIN_PASS}`);
-      const res   = await fetch("http://localhost:8000/dashboard/stats", {
+      const res   = await fetch(`${API}/dashboard/stats`, {
         headers: { Authorization: `Basic ${creds}` },
       });
       const data  = await res.json();
