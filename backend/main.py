@@ -530,3 +530,8 @@ if FRONTEND_BUILD.exists():
     @app.get("/{full_path:path}")
     async def serve_frontend(full_path: str):
         return FileResponse(str(FRONTEND_BUILD / "index.html"))
+    
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
