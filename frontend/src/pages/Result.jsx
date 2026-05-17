@@ -255,33 +255,27 @@ export default function Result({ language, result, setResult }) {
         </div>
       </div>
 
-      {/* ── FIX: Only show Original + Heatmap — exactly 2 images ── */}
-      {(result.image || result.heatmap) && (
+      {/* ── FIX 1: Heatmap — show Original + Heatmap side by side, no duplicate ── */}
+      {(result.image && result.heatmap) && (
         <div className="result-section">
           <div className="section-title">{L.original} / {L.heatmap}</div>
           <div className="heatmap-container">
-            {/* Original image only */}
-            {result.image && (
-              <div>
-                <img
-                  src={`data:image/jpeg;base64,${result.image}`}
-                  alt="original leaf"
-                  className="heatmap-img"
-                />
-                <div className="heatmap-label">{L.original}</div>
-              </div>
-            )}
-            {/* Heatmap only */}
-            {result.heatmap && (
-              <div>
-                <img
-                  src={`data:image/png;base64,${result.heatmap}`}
-                  alt="AI heatmap"
-                  className="heatmap-img"
-                />
-                <div className="heatmap-label">{L.heatmap}</div>
-              </div>
-            )}
+            <div>
+              <img
+                src={`data:image/jpeg;base64,${result.image}`}
+                alt="original leaf"
+                className="heatmap-img"
+              />
+              <div className="heatmap-label">{L.original}</div>
+            </div>
+            <div>
+              <img
+                src={`data:image/png;base64,${result.heatmap}`}
+                alt="AI heatmap"
+                className="heatmap-img"
+              />
+              <div className="heatmap-label">{L.heatmap}</div>
+            </div>
           </div>
         </div>
       )}
