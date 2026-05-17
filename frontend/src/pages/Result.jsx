@@ -255,12 +255,12 @@ export default function Result({ language, result, setResult }) {
         </div>
       </div>
 
-      {/* ── FIX 1: Heatmap — show Original + Heatmap side by side, no duplicate ── */}
+      {/* ── FIX: Only show Original + Heatmap — exactly 2 images ── */}
       {(result.image || result.heatmap) && (
         <div className="result-section">
           <div className="section-title">{L.original} / {L.heatmap}</div>
           <div className="heatmap-container">
-            {/* Original image */}
+            {/* Original image only */}
             {result.image && (
               <div>
                 <img
@@ -271,7 +271,7 @@ export default function Result({ language, result, setResult }) {
                 <div className="heatmap-label">{L.original}</div>
               </div>
             )}
-            {/* Heatmap only — NOT a composite, just the pure heatmap overlay */}
+            {/* Heatmap only */}
             {result.heatmap && (
               <div>
                 <img
