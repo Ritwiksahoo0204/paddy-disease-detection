@@ -38,18 +38,19 @@ app = FastAPI(title="Paddy Doctor API", version="2.0.0")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# ── CORS ────────────────────────────────────────────────────────────────────
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    os.getenv("FRONTEND_URL", "https://paddy-disease-detection.vercel.app"),
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "https://paddy-disease-detection.vercel.app",
-        "*"
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # ── Paths ───────────────────────────────────────────────────────────────────
