@@ -318,7 +318,7 @@ def generate_gradcam(img_array, model, class_idx):
             conv_outputs, predictions = grad_model(img_tensor)
             loss = predictions[:, class_idx]
 
-        grads       = tape.gradient(loss, conv_outputs)
+        grads        = tape.gradient(loss, conv_outputs)
         pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
         conv_outputs = conv_outputs[0]
         heatmap      = conv_outputs @ pooled_grads[..., tf.newaxis]
@@ -330,26 +330,15 @@ def generate_gradcam(img_array, model, class_idx):
         heatmap_colored = cm.jet(heatmap_resized)[:, :, :3]
         heatmap_colored = (heatmap_colored * 255).astype(np.uint8)
 
-        original = (img_array * 255).astype(np.uint8)
+        # ── Return ONLY the superimposed heatmap ──
+        original     = (img_array * 255).astype(np.uint8)
         superimposed = cv2.addWeighted(original, 0.6, heatmap_colored, 0.4, 0)
 
-        fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-        axes[0].imshow(original)
-        axes[0].set_title('Original Image', fontsize=12, fontweight='bold')
-        axes[0].axis('off')
-
-        axes[1].imshow(superimposed)
-        axes[1].set_title('AI Detection (Heatmap)', fontsize=12, fontweight='bold')
-        axes[1].axis('off')
-
-        plt.tight_layout()
         buf = io.BytesIO()
-        plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
-        plt.close()
+        Image.fromarray(superimposed).save(buf, format='PNG')
         buf.seek(0)
 
-        heatmap_b64 = base64.b64encode(buf.read()).decode('utf-8')
-        return heatmap_b64
+        return base64.b64encode(buf.read()).decode('utf-8')
 
     except Exception as e:
         logger.error(f"Grad-CAM error: {e}")
