@@ -71,35 +71,29 @@ def verify_admin(credentials: HTTPBasicCredentials = Depends(security)):
                             headers={"WWW-Authenticate": "Basic"})
     return credentials.username
 
-# ── Load Models ─────────────────────────────────────────────────────────────
-logger.info("Loading models...")
-try:
-    # Limit TensorFlow memory usage
-    import tensorflow as tf
-    gpus = tf.config.experimental.list_physical_devices('GPU')
-    tf.config.threading.set_inter_op_parallelism_threads(1)
-    tf.config.threading.set_intra_op_parallelism_threads(1)
-    
-    # Limit memory growth
-    import os
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-    os.environ['MALLOC_TRIM_THRESHOLD_'] = '100000'
+# ── Load Models (Lazy) ──────────────────────────────────────────────────────
+main_model  = None
+validator   = None
+class_names = {}
 
-    main_model = tf.keras.models.load_model(
-        str(MODELS_DIR / "best_model.keras"),
-        compile=False  # saves memory
-    )
-    validator = tf.keras.models.load_model(
-        str(MODELS_DIR / "paddy_validator.keras"),
-        compile=False  # saves memory
-    )
-    with open(MODELS_DIR / "class_names.json") as f:
-        class_names = json.load(f)
-    logger.info("Models loaded successfully!")
-except Exception as e:
-    logger.error(f"Model loading failed: {e}")
-    raise
-
+def get_models():
+    global main_model, validator, class_names
+    if main_model is None:
+        import gc
+        tf.config.threading.set_inter_op_parallelism_threads(1)
+        tf.config.threading.set_intra_op_parallelism_threads(1)
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+        main_model = tf.keras.models.load_model(
+            str(MODELS_DIR / "best_model.keras"), compile=False
+        )
+        validator = tf.keras.models.load_model(
+            str(MODELS_DIR / "paddy_validator.keras"), compile=False
+        )
+        with open(MODELS_DIR / "class_names.json") as f:
+            class_names = json.load(f)
+        gc.collect()
+        logger.info("Models loaded successfully!")
+    return main_model, validator, class_names
 # ── Database ─────────────────────────────────────────────────────────────────
 def init_db():
     conn = sqlite3.connect(DB_PATH)
@@ -360,6 +354,7 @@ async def health():
 @app.post("/predict")
 @limiter.limit("10/minute")
 async def predict(request: Request, file: UploadFile = File(...)):
+    main_model, validator, class_names = get_models()
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Only image files accepted.")
 
