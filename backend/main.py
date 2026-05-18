@@ -415,7 +415,8 @@ async def predict(request: Request, file: UploadFile = File(...)):
     top3 = [{"disease": k, "probability": v} for k, v in sorted_probs[:3]]
 
     # Grad-CAM
-    heatmap_b64 = generate_gradcam(img_array, main_model, cls_idx)
+    # heatmap_b64 = generate_gradcam(img_array, main_model, cls_idx)
+    heatmap_b64 = None  #Grad-CAM — disabled on free tier to save memory
 
     # Image base64
     img_b64 = base64.b64encode(image_bytes).decode('utf-8')
