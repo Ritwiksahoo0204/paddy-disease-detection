@@ -351,6 +351,11 @@ def preprocess_image(image_bytes):
 async def health():
     return {"status": "ok", "version": "2.0.0", "message": "Paddy Doctor API running"}
 
+@app.get("/warmup")
+async def warmup():
+    get_models()
+    return {"status": "ready", "message": "Models loaded and ready!"}
+
 @app.post("/predict")
 @limiter.limit("10/minute")
 async def predict(request: Request, file: UploadFile = File(...)):
