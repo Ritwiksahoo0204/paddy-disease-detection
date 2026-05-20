@@ -60,8 +60,8 @@ DB_PATH    = BASE_DIR / "paddy_doctor.db"
 
 # ── Admin Auth ───────────────────────────────────────────────────────────────
 security = HTTPBasic()
-ADMIN_USERNAME = os.getenv("ADMIN_USERNAME")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "paddydoctor2024")
 
 def verify_admin(credentials: HTTPBasicCredentials = Depends(security)):
     correct_username = secrets.compare_digest(credentials.username, ADMIN_USERNAME)
@@ -71,29 +71,35 @@ def verify_admin(credentials: HTTPBasicCredentials = Depends(security)):
                             headers={"WWW-Authenticate": "Basic"})
     return credentials.username
 
-# ── Load Models (Lazy) ──────────────────────────────────────────────────────
-main_model  = None
-validator   = None
-class_names = {}
+# ── Load Models ─────────────────────────────────────────────────────────────
+logger.info("Loading models...")
+try:
+    # Limit TensorFlow memory usage
+    import tensorflow as tf
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    tf.config.threading.set_inter_op_parallelism_threads(1)
+    tf.config.threading.set_intra_op_parallelism_threads(1)
+    
+    # Limit memory growth
+    import os
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    os.environ['MALLOC_TRIM_THRESHOLD_'] = '100000'
 
-def get_models():
-    global main_model, validator, class_names
-    if main_model is None:
-        import gc
-        tf.config.threading.set_inter_op_parallelism_threads(1)
-        tf.config.threading.set_intra_op_parallelism_threads(1)
-        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-        main_model = tf.keras.models.load_model(
-            str(MODELS_DIR / "best_model.keras"), compile=False
-        )
-        validator = tf.keras.models.load_model(
-            str(MODELS_DIR / "paddy_validator.keras"), compile=False
-        )
-        with open(MODELS_DIR / "class_names.json") as f:
-            class_names = json.load(f)
-        gc.collect()
-        logger.info("Models loaded successfully!")
-    return main_model, validator, class_names
+    main_model = tf.keras.models.load_model(
+        str(MODELS_DIR / "best_model.keras"),
+        compile=False  # saves memory
+    )
+    validator = tf.keras.models.load_model(
+        str(MODELS_DIR / "paddy_validator.keras"),
+        compile=False  # saves memory
+    )
+    with open(MODELS_DIR / "class_names.json") as f:
+        class_names = json.load(f)
+    logger.info("Models loaded successfully!")
+except Exception as e:
+    logger.error(f"Model loading failed: {e}")
+    raise
+
 # ── Database ─────────────────────────────────────────────────────────────────
 def init_db():
     conn = sqlite3.connect(DB_PATH)
@@ -329,10 +335,13 @@ def generate_gradcam(img_array, model, class_idx):
         superimposed = cv2.addWeighted(original, 0.6, heatmap_colored, 0.4, 0)
 
         buf = io.BytesIO()
-        Image.fromarray(superimposed).save(buf, format='PNG')
+        Image.fromarray(superimposed).save(buf, format='JPEG', quality=75)
         buf.seek(0)
-
-        return base64.b64encode(buf.read()).decode('utf-8')
+        result = base64.b64encode(buf.read()).decode('utf-8')
+        del grad_model, conv_outputs, grads, pooled_grads, heatmap
+        del heatmap_resized, heatmap_colored, superimposed
+        import gc; gc.collect()
+        return result
 
     except Exception as e:
         logger.error(f"Grad-CAM error: {e}")
@@ -351,15 +360,9 @@ def preprocess_image(image_bytes):
 async def health():
     return {"status": "ok", "version": "2.0.0", "message": "Paddy Doctor API running"}
 
-@app.get("/warmup")
-async def warmup():
-    get_models()
-    return {"status": "ready", "message": "Models loaded and ready!"}
-
 @app.post("/predict")
 @limiter.limit("10/minute")
 async def predict(request: Request, file: UploadFile = File(...)):
-    main_model, validator, class_names = get_models()
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Only image files accepted.")
 
@@ -420,8 +423,10 @@ async def predict(request: Request, file: UploadFile = File(...)):
     top3 = [{"disease": k, "probability": v} for k, v in sorted_probs[:3]]
 
     # Grad-CAM
-    # heatmap_b64 = generate_gradcam(img_array, main_model, cls_idx)
-    heatmap_b64 = None  #Grad-CAM — disabled on free tier to save memory
+    try:
+        heatmap_b64 = generate_gradcam(img_array, main_model, cls_idx)
+    except Exception:
+        heatmap_b64 = None
 
     # Image base64
     img_b64 = base64.b64encode(image_bytes).decode('utf-8')
