@@ -255,7 +255,7 @@ export default function Treatment({ language, result }) {
 
       {/* ── Back Button ── */}
       <div style={{ padding: "0 1.25rem 1rem" }}>
-        <button className="btn-secondary" style={{ width: "100%" }} onClick={() => navigate("/result")}>
+        <button className="btn-secondary" style={{ width: "100%" }} onClick={() => navigate(result.prediction_id ? `/result/${result.prediction_id}` : "/result")}>
           ← {L.back}
         </button>
       </div>

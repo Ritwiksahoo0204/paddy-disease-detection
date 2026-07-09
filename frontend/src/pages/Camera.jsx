@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getSessionId } from "../utils/session";
 
 const TIPS = {
   en: "Make sure the leaf is clear and visible",
@@ -66,10 +67,14 @@ export default function Camera({ language, setResult }) {
     formData.append("file", blob, "capture.jpg");
     try {
       const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
-      const res  = await fetch(`${API}/predict`, { method: "POST", body: formData });
+      const res  = await fetch(`${API}/predict?lang=${language}`, {
+        method: "POST",
+        headers: { "X-Session-Id": getSessionId() },
+        body: formData,
+      });
       const data = await res.json();
       setResult(data);
-      navigate("/result");
+      navigate(data.prediction_id ? `/result/${data.prediction_id}` : "/result");
     } catch {
       setResult({ status: "error", message: "Could not connect to server." });
       navigate("/result");

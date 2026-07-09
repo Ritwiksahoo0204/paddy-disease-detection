@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import BottomNav from "../components/BottomNav";
+import { getSessionId } from "../utils/session";
 
 const LABELS = {
   en: {
@@ -64,7 +65,7 @@ export default function History({ language }) {
 
   useEffect(() => {
     const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
-    fetch(`${API}/history`)
+    fetch(`${API}/history`, { headers: { "X-Session-Id": getSessionId() } })
       .then((r) => r.json())
       .then((data) => { setHistory(data.history || []); setLoading(false); })
       .catch(() => { setError(true); setLoading(false); });
@@ -106,12 +107,17 @@ export default function History({ language }) {
       {!loading && !error && history.length > 0 && (
         <div className="history-list">
           {history.map((item) => (
-            <div className="history-card" key={item.id}>
+            <div
+              className="history-card"
+              key={item.id}
+              onClick={() => navigate(`/result/${item.id}`)}
+              style={{ cursor: "pointer" }}
+            >
               {/* Image */}
               <div className="history-img">
-                {item.image_base64 ? (
+                {item.image_url || item.image_base64 ? (
                   <img
-                    src={`data:image/jpeg;base64,${item.image_base64}`}
+                    src={item.image_url || `data:image/jpeg;base64,${item.image_base64}`}
                     alt={item.disease}
                     style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "var(--radius-xs)" }}
                   />

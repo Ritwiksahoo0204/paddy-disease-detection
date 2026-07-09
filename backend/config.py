@@ -15,7 +15,7 @@ UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 # ── Model / prediction constants ─────────────────────────────────────────────
 IMG_SIZE             = (224, 224)
-VALIDATOR_THRESHOLD  = 0.85
+VALIDATOR_THRESHOLD  = 0.6
 CONFIDENCE_THRESHOLD = 0.70
 
 # ── Rate limiter (shared singleton used by both main.py and routes) ─────────

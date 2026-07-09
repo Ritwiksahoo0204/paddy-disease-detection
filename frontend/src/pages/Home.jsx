@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useRef } from "react";
 import BottomNav from "../components/BottomNav";
+import { getSessionId } from "../utils/session";
 
 const CONTENT = {
   en: {
@@ -65,10 +66,14 @@ export default function Home({ language, setLanguage, setResult }) {
     formData.append("file", file);
     try {
       const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
-      const res  = await fetch(`${API}/predict`, { method: "POST", body: formData });
+      const res  = await fetch(`${API}/predict?lang=${language}`, {
+        method: "POST",
+        headers: { "X-Session-Id": getSessionId() },
+        body: formData,
+      });
       const data = await res.json();
       setResult(data);
-      navigate("/result");
+      navigate(data.prediction_id ? `/result/${data.prediction_id}` : "/result");
     } catch {
       setResult({ status: "error", message: "Could not connect to server. Make sure the backend is running." });
       navigate("/result");

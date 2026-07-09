@@ -10,17 +10,26 @@ import Dashboard from "./pages/Dashboard";
 import DisclaimerModal from "./components/DisclaimerModal";
 import "./App.css";
 
+const DISCLAIMER_KEY = "paddy_doctor_disclaimer_accepted";
+
 export default function App() {
-  const [showDisclaimer, setShowDisclaimer] = useState(true);
+  const [showDisclaimer, setShowDisclaimer] = useState(
+    () => localStorage.getItem(DISCLAIMER_KEY) !== "true"
+  );
   const [language, setLanguage]             = useState("en");
   const [result, setResult]                 = useState(null);
+
+  function handleAcceptDisclaimer() {
+    localStorage.setItem(DISCLAIMER_KEY, "true");
+    setShowDisclaimer(false);
+  }
 
   return (
     <BrowserRouter>
       {showDisclaimer && (
         <DisclaimerModal
           language={language}
-          onAccept={() => setShowDisclaimer(false)}
+          onAccept={handleAcceptDisclaimer}
         />
       )}
       <Routes>
@@ -28,6 +37,7 @@ export default function App() {
         <Route path="/camera"     element={<Camera language={language} setResult={setResult} />} />
         <Route path="/analyzing"  element={<Analyzing language={language} />} />
         <Route path="/result"     element={result ? <Result language={language} result={result} setResult={setResult} /> : <Navigate to="/" />} />
+        <Route path="/result/:id" element={<Result language={language} result={result} setResult={setResult} />} />
         <Route path="/treatment"  element={result ? <Treatment language={language} result={result} /> : <Navigate to="/" />} />
         <Route path="/history"    element={<History language={language} />} />
         <Route path="/dashboard"  element={<Dashboard />} />
