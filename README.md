@@ -2,8 +2,8 @@
 
 A full-stack deep learning web application that detects paddy (rice) leaf diseases from a photo, explains the result with a visual heatmap, and provides multilingual treatment guidance — built as a final year college project.
 
-**Live demo:** `<add your Vercel URL here>`
-**Backend API:** `<add your Render URL here>`
+**Live demo:** `https://paddy-disease-detection.vercel.app`
+**Backend API:** `https://paddy-doctor-backend.onrender.com`
 
 ---
 
