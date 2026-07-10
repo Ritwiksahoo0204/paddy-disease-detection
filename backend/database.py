@@ -19,9 +19,17 @@ def init_db():
             heatmap_path  TEXT
         )
     """)
-    # Migration: add session_id column if it doesn't already exist (safe on existing DBs)
+    # Migration: add any expected column that's missing (safe on existing DBs
+    # of any prior schema version — checks each column individually rather
+    # than assuming only session_id could ever be missing)
+    expected_columns = {
+        "image_path":   "TEXT",
+        "heatmap_path": "TEXT",
+        "session_id":   "TEXT",
+    }
     existing_cols = [row[1] for row in conn.execute("PRAGMA table_info(predictions)").fetchall()]
-    if "session_id" not in existing_cols:
-        conn.execute("ALTER TABLE predictions ADD COLUMN session_id TEXT")
+    for col_name, col_type in expected_columns.items():
+        if col_name not in existing_cols:
+            conn.execute(f"ALTER TABLE predictions ADD COLUMN {col_name} {col_type}")
     conn.commit()
     conn.close()

@@ -1,5 +1,5 @@
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import BottomNav from "../components/BottomNav";
 
@@ -148,6 +148,23 @@ function getRiskClass(risk) {
   return "low";
 }
 
+// Backend returns full URLs (e.g. http://.../uploads/xxx.jpg) for image/heatmap.
+// This safely handles that, while still working if a raw base64 string is
+// ever passed instead — avoids producing an invalid "data:...;base64,http://..."
+// URL like wrapping a URL blindly would.
+function getImageSrc(value, mimeType) {
+  if (!value) return "";
+  if (
+    value.startsWith("http") ||
+    value.startsWith("/") ||
+    value.startsWith("data:") ||
+    value.startsWith("blob:")
+  ) {
+    return value;
+  }
+  return `data:${mimeType};base64,${value}`;
+}
+
 // ── Edge case screens ──
 function EdgeScreen({ icon, title, msg, tip, btnLabel, onBtn, language }) {
   return (
@@ -168,10 +185,35 @@ function EdgeScreen({ icon, title, msg, tip, btnLabel, onBtn, language }) {
 
 export default function Result({ language, result, setResult }) {
   const navigate = useNavigate();
+  const { id } = useParams();
   const [feedback, setFeedback] = useState(null);
   const [showFull, setShowFull] = useState(false);
+  const [loading, setLoading] = useState(false);
   const L = LABELS[language] || LABELS.en;
 
+  // On mount (e.g. a hard refresh), if the URL has an id but we don't have
+  // the matching result in memory, fetch it from the backend instead of
+  // showing a blank page.
+  useEffect(() => {
+    if (id && (!result || result.prediction_id !== parseInt(id))) {
+      setLoading(true);
+      const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
+      fetch(`${API}/prediction/${id}?lang=${language}`)
+        .then((res) => res.json())
+        .then((data) => setResult(data))
+        .catch(() =>
+          setResult({ status: "error", message: "Could not connect to server." })
+        )
+        .finally(() => setLoading(false));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  if (loading) return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+      <div style={{ fontSize: "0.9rem", color: "var(--gray-500)" }}>Loading...</div>
+    </div>
+  );
   if (!result) return null;
 
   const goHome = () => { setResult(null); navigate("/"); };
@@ -262,7 +304,7 @@ export default function Result({ language, result, setResult }) {
           <div className="heatmap-container">
             <div>
               <img
-                src={`data:image/jpeg;base64,${result.image}`}
+                src={getImageSrc(result.image, "image/jpeg")}
                 alt="original leaf"
                 className="heatmap-img"
               />
@@ -270,7 +312,7 @@ export default function Result({ language, result, setResult }) {
             </div>
             <div>
               <img
-                src={`data:image/png;base64,${result.heatmap}`}
+                src={getImageSrc(result.heatmap, "image/png")}
                 alt="AI heatmap"
                 className="heatmap-img"
               />
